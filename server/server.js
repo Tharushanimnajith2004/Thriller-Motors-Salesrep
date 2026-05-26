@@ -11,7 +11,7 @@ import { Item, Route, Customer, Salesman, Bill, DailyTarget } from './models.js'
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
-const DATABASE_MODE = process.env.DATABASE_MODE || 'local';
+const DATABASE_MODE = process.env.MONGODB_URI ? 'cloud' : (process.env.DATABASE_MODE || 'local');
 
 app.use(cors());
 app.use(express.json());
@@ -140,6 +140,17 @@ async function seedCloudDatabase() {
 }
 
 // ==================== DUAL-MODE API ROUTERS ====================
+
+app.get('/api/status', (req, res) => {
+  res.json({
+    databaseMode: DATABASE_MODE,
+    mongooseStatus: mongoose.connection.readyState, // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+    envExists: {
+      MONGODB_URI: !!process.env.MONGODB_URI,
+      DATABASE_MODE: !!process.env.DATABASE_MODE
+    }
+  });
+});
 
 // 1. Items API
 app.get('/api/items', async (req, res) => {
