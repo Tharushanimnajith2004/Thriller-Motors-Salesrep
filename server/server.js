@@ -399,6 +399,18 @@ app.get('/api/salesmen', async (req, res) => {
     res.json(db.salesmen);
   } else {
     try {
+      // Self-heal: Ensure sales1 and sales2 documents exist in Cloud Database
+      let s1 = await Salesman.findOne({ id: 'sales1' });
+      if (!s1) {
+        console.log('[Self-Heal] Re-creating missing salesman sales1 in cloud...');
+        s1 = await new Salesman({ id: 'sales1', name: 'Salesman 1', isTracking: false, lat: null, lng: null, lastUpdated: null }).save();
+      }
+      let s2 = await Salesman.findOne({ id: 'sales2' });
+      if (!s2) {
+        console.log('[Self-Heal] Re-creating missing salesman sales2 in cloud...');
+        s2 = await new Salesman({ id: 'sales2', name: 'Salesman 2', isTracking: false, lat: null, lng: null, lastUpdated: null }).save();
+      }
+
       const salesmen = await Salesman.find();
       res.json(salesmen);
     } catch (err) {
@@ -419,8 +431,11 @@ app.put('/api/salesmen/:id', async (req, res) => {
   } else {
     try {
       const { name } = req.body;
-      const salesman = await Salesman.findOneAndUpdate({ id: req.params.id }, { name }, { new: true });
-      if (!salesman) return res.status(404).json({ error: 'Salesman not found' });
+      const salesman = await Salesman.findOneAndUpdate(
+        { id: req.params.id }, 
+        { name }, 
+        { new: true, upsert: true }
+      );
       res.json(salesman);
     } catch (err) {
       res.status(400).json({ error: err.message });
@@ -452,8 +467,12 @@ app.put('/api/salesmen/:id/location', async (req, res) => {
         lng: lng !== undefined ? lng : null,
         lastUpdated: isTracking ? new Date().toISOString() : null
       };
-      const salesman = await Salesman.findOneAndUpdate({ id: req.params.id }, updateData, { new: true });
-      if (!salesman) return res.status(404).json({ error: 'Salesman not found' });
+      // Upsert: true ensures that even if missing it will be created on tracking activation
+      const salesman = await Salesman.findOneAndUpdate(
+        { id: req.params.id }, 
+        updateData, 
+        { new: true, upsert: true }
+      );
       res.json(salesman);
     } catch (err) {
       res.status(400).json({ error: err.message });
@@ -468,6 +487,18 @@ app.get('/api/daily-targets', async (req, res) => {
     res.json(db.dailyTargets);
   } else {
     try {
+      // Self-heal: Ensure sales1 and sales2 targets exist
+      let t1 = await DailyTarget.findOne({ salesmanId: 'sales1' });
+      if (!t1) {
+        console.log('[Self-Heal] Re-creating missing daily target for sales1...');
+        t1 = await new DailyTarget({ salesmanId: 'sales1', amount: 25000 }).save();
+      }
+      let t2 = await DailyTarget.findOne({ salesmanId: 'sales2' });
+      if (!t2) {
+        console.log('[Self-Heal] Re-creating missing daily target for sales2...');
+        t2 = await new DailyTarget({ salesmanId: 'sales2', amount: 25000 }).save();
+      }
+
       const targets = await DailyTarget.find();
       const targetsObj = {};
       targets.forEach(t => {
