@@ -238,11 +238,49 @@ const ProfilePage = () => {
           </div>
         )}
 
-        {/* Error notification */}
+        {/* Error notification & Diagnostics Troubleshooting Guide */}
         {gpsError && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(239, 68, 68, 0.08)', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#f87171', fontSize: '0.8rem', fontWeight: '600' }}>
-            <AlertTriangle size={16} />
-            <span>{gpsError}</span>
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '0.75rem', 
+            background: 'rgba(239, 68, 68, 0.08)', 
+            padding: '1rem', 
+            borderRadius: '12px', 
+            border: '1px solid rgba(239, 68, 68, 0.25)', 
+            color: '#fca5a5', 
+            fontSize: '0.8rem', 
+            lineHeight: '1.4',
+            animation: 'fadeIn 0.3s ease-out'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f87171', fontWeight: '700' }}>
+              <AlertTriangle size={18} />
+              <span>{gpsError}</span>
+            </div>
+            
+            <div style={{ 
+              borderTop: '1px solid rgba(239, 68, 68, 0.15)', 
+              paddingTop: '0.6rem', 
+              marginTop: '0.2rem',
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '0.5rem' 
+            }}>
+              <span style={{ fontWeight: '700', color: '#ff8a8a', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                🔧 Location Access Troubleshooting:
+              </span>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', color: '#e2e8f0' }}>
+                <li>
+                  <strong>Safari (iPhone):</strong> Tap the <strong>aA</strong> icon on the left of your address bar &rarr; Select <strong>Website Settings</strong> &rarr; Change <strong>Location</strong> permission to <strong>Allow</strong>. Then refresh!
+                </li>
+                <li>
+                  <strong>Chrome (iPhone):</strong> Go to iOS <strong>Settings</strong> &rarr; Scroll down to <strong>Chrome</strong> &rarr; Tap <strong>Location</strong> &rarr; Select <strong>While Using the App</strong>.
+                </li>
+                <li>
+                  <strong>Global iPhone GPS</strong>: Go to iOS <strong>Settings</strong> &rarr; <strong>Privacy & Security</strong> &rarr; <strong>Location Services</strong> &rarr; Make sure it is turned <strong>ON</strong>.
+                </li>
+              </ul>
+            </div>
           </div>
         )}
       </div>
