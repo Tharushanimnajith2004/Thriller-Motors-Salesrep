@@ -217,7 +217,12 @@ app.delete('/api/items/:id', async (req, res) => {
     res.json({ success: true });
   } else {
     try {
-      const deleted = await Item.findByIdAndDelete(req.params.id);
+      let deleted;
+      if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+        deleted = await Item.findByIdAndDelete(req.params.id);
+      } else {
+        deleted = await Item.findOneAndDelete({ id: req.params.id });
+      }
       if (!deleted) return res.status(404).json({ error: 'Item not found' });
       res.json({ success: true });
     } catch (err) {
@@ -292,7 +297,12 @@ app.delete('/api/routes/:id', async (req, res) => {
     res.json({ success: true });
   } else {
     try {
-      const deleted = await Route.findByIdAndDelete(req.params.id);
+      let deleted;
+      if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+        deleted = await Route.findByIdAndDelete(req.params.id);
+      } else {
+        deleted = await Route.findOneAndDelete({ id: req.params.id });
+      }
       if (!deleted) return res.status(404).json({ error: 'Route not found' });
       const custs = await Customer.find({ routeId: req.params.id });
       const custIds = custs.map(c => c._id.toString());
@@ -369,7 +379,12 @@ app.delete('/api/customers/:id', async (req, res) => {
     res.json({ success: true });
   } else {
     try {
-      const deleted = await Customer.findByIdAndDelete(req.params.id);
+      let deleted;
+      if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+        deleted = await Customer.findByIdAndDelete(req.params.id);
+      } else {
+        deleted = await Customer.findOneAndDelete({ id: req.params.id });
+      }
       if (!deleted) return res.status(404).json({ error: 'Customer not found' });
       await Bill.deleteMany({ customerId: req.params.id });
       res.json({ success: true });
@@ -616,7 +631,12 @@ app.delete('/api/bills/:id', async (req, res) => {
     res.json({ success: true });
   } else {
     try {
-      const deleted = await Bill.findByIdAndDelete(req.params.id);
+      let deleted;
+      if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+        deleted = await Bill.findByIdAndDelete(req.params.id);
+      } else {
+        deleted = await Bill.findOneAndDelete({ id: req.params.id });
+      }
       if (!deleted) return res.status(404).json({ error: 'Bill not found' });
       res.json({ success: true });
     } catch (err) {
