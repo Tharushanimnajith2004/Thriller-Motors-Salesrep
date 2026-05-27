@@ -21,10 +21,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const LOCAL_DB_PATH = path.join(__dirname, 'data', 'db.json');
 
-// Ensure data folder exists
-const dataFolder = path.dirname(LOCAL_DB_PATH);
-if (!fs.existsSync(dataFolder)) {
-  fs.mkdirSync(dataFolder, { recursive: true });
+// Ensure data folder exists only in local mode to avoid EROFS errors on Vercel serverless startup
+if (DATABASE_MODE === 'local') {
+  const dataFolder = path.dirname(LOCAL_DB_PATH);
+  if (!fs.existsSync(dataFolder)) {
+    fs.mkdirSync(dataFolder, { recursive: true });
+  }
 }
 
 // Default Seed Data for Local Database fallback
