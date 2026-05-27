@@ -10,6 +10,7 @@ const ItemsPage = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [newItem, setNewItem] = useState({ name: '', price: '' });
   const [activeTab, setActiveTab] = useState('catalog'); // 'catalog' or 'gps'
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Salesmen editing state
   const [sales1Name, setSales1Name] = useState('');
@@ -221,6 +222,11 @@ const ItemsPage = () => {
     }
   };
 
+  const filteredItems = items.filter(item => 
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.id && item.id.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   return (
     <div className="min-h-screen p-4 md:p-8" style={{ paddingBottom: '60px' }}>
       {/* Toast Notification */}
@@ -385,6 +391,51 @@ const ItemsPage = () => {
               {/* Left Column: Product Table */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <h3 className="text-lg font-semibold text-white m-0">Product Catalog</h3>
+                
+                {/* Glowing Premium Search Bar */}
+                <div style={{ position: 'relative', width: '100%', marginBottom: '0.25rem' }}>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    placeholder="🔍 Search items by name or ID..."
+                    style={{
+                      width: '100%',
+                      height: '42px',
+                      background: 'rgba(15, 23, 42, 0.45)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '12px',
+                      padding: '0 1rem',
+                      color: 'white',
+                      fontSize: '0.9rem',
+                      outline: 'none',
+                      transition: 'all 0.3s ease',
+                      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
+                    }}
+                    onFocus={e => { e.target.style.borderColor = '#6366f1'; e.target.style.boxShadow = '0 0 10px rgba(99,102,241,0.2)'; }}
+                    onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'inset 0 2px 4px rgba(0,0,0,0.2)'; }}
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#94a3b8',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
                 <div className="table-container">
                   <table>
                     <thead>
@@ -396,12 +447,12 @@ const ItemsPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {items.length === 0 ? (
+                      {filteredItems.length === 0 ? (
                         <tr>
-                          <td colSpan="4" className="text-center py-8 text-muted">No items found. Add some!</td>
+                          <td colSpan="4" className="text-center py-8 text-muted">No matching items found.</td>
                         </tr>
                       ) : (
-                        items.map(item => (
+                        filteredItems.map(item => (
                           <tr key={item.id}>
                             <td className="text-muted font-mono">{item.id}</td>
                             <td className="font-medium text-white">{item.name}</td>
