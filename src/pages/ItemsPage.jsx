@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useStore } from '../store/StoreContext';
-import { LogOut, Package, Plus, ArrowLeft, Users, Check, Sparkles, Compass, Play, Square, ExternalLink, Trash, Edit } from 'lucide-react';
+import { LogOut, Package, Plus, ArrowLeft, Users, Check, Sparkles, Compass, Play, Square, ExternalLink, Trash, Edit, FileText, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const ItemsPage = () => {
-  const { items, addItem, updateItem, deleteItem, logout, salesmen, updateSalesmanName, updateSalesmanLocation } = useStore();
+  const { items, addItem, updateItem, deleteItem, logout, salesmen, updateSalesmanName, updateSalesmanLocation, bills, customers } = useStore();
   const navigate = useNavigate();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [newItem, setNewItem] = useState({ name: '', price: '' });
-  const [activeTab, setActiveTab] = useState('catalog'); // 'catalog' or 'gps'
+  const [activeTab, setActiveTab] = useState('catalog'); // 'catalog', 'gps', or 'sales'
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedDates, setExpandedDates] = useState({});
+  const [expandedBills, setExpandedBills] = useState({});
 
   // Salesmen editing state
   const [sales1Name, setSales1Name] = useState('');
@@ -222,6 +224,57 @@ const ItemsPage = () => {
     }
   };
 
+  const getCustomerName = (cId) => {
+    const c = customers?.find(cust => cust.id === cId || cust._id === cId);
+    return c ? c.name : 'Unknown Customer';
+  };
+
+  const getSalesmanName = (sId) => {
+    const s = salesmen?.find(sales => sales.id === sId);
+    return s ? s.name : sId === 'sales1' ? 'Salesman 1' : sId === 'sales2' ? 'Salesman 2' : 'Unknown Salesman';
+  };
+
+  const formatDateFriendly = (dateStr) => {
+    try {
+      const options = { year: 'numeric', month: 'short', day: 'numeric' };
+      const dateObj = new Date(dateStr);
+      return dateObj.toLocaleDateString('en-US', options);
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const formatTimeFriendly = (isoStr) => {
+    try {
+      const dateObj = new Date(isoStr);
+      return dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+      return '';
+    }
+  };
+
+  // Group bills by date
+  const groupedBillsByDate = {};
+  if (bills) {
+    bills.forEach(bill => {
+      const dateStr = bill.date ? bill.date.split('T')[0] : new Date().toISOString().split('T')[0];
+      if (!groupedBillsByDate[dateStr]) {
+        groupedBillsByDate[dateStr] = [];
+      }
+      groupedBillsByDate[dateStr].push(bill);
+    });
+  }
+
+  const toggleDateExpanded = (date) => {
+    setExpandedDates(prev => ({ ...prev, [date]: !prev[date] }));
+  };
+
+  const toggleBillExpanded = (billId) => {
+    setExpandedBills(prev => ({ ...prev, [billId]: !prev[billId] }));
+  };
+
+  const sortedDates = Object.keys(groupedBillsByDate).sort((a, b) => b.localeCompare(a));
+
   const filteredItems = items.filter(item => 
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (item.id && item.id.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -295,11 +348,12 @@ const ItemsPage = () => {
         </div>
 
         {/* Premium Dashboard Glass Tabs */}
-        <div className="glass-panel mb-8 p-1 flex max-w-md animate-fade-in" style={{
+        <div className="glass-panel mb-8 p-1 flex max-w-xl animate-fade-in" style={{
           background: 'rgba(15, 23, 42, 0.45)',
           borderRadius: '14px',
           border: '1px solid rgba(255, 255, 255, 0.08)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          width: '100%'
         }}>
           <button 
             onClick={() => { setActiveTab('catalog'); setShowAddForm(false); }}
@@ -325,7 +379,7 @@ const ItemsPage = () => {
             Store Catalog
           </button>
           <button 
-            onClick={() => setActiveTab('gps')}
+            onClick={() => { setActiveTab('gps'); setShowAddForm(false); }}
             style={{
               flex: 1,
               height: '40px',
@@ -347,9 +401,32 @@ const ItemsPage = () => {
             <Compass size={16} />
             Salesman GPS Radar
           </button>
+          <button 
+            onClick={() => { setActiveTab('sales'); setShowAddForm(false); }}
+            style={{
+              flex: 1,
+              height: '40px',
+              border: 'none',
+              borderRadius: '10px',
+              background: activeTab === 'sales' ? 'rgba(99, 102, 241, 0.2)' : 'transparent',
+              color: activeTab === 'sales' ? '#ffffff' : '#cbd5e1',
+              fontWeight: '700',
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              border: activeTab === 'sales' ? '1px solid rgba(99, 102, 241, 0.25)' : '1px solid transparent',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.35rem'
+            }}
+          >
+            <FileText size={16} />
+            Daily Sales
+          </button>
         </div>
 
-        {activeTab === 'catalog' ? (
+        {activeTab === 'catalog' && (
           <>
             {showAddForm && (
               <div className="glass-panel p-6 mb-8 animate-fade-in border border-primary/30">
@@ -551,7 +628,9 @@ const ItemsPage = () => {
               </div>
             </div>
           </>
-        ) : (
+        )}
+
+        {activeTab === 'gps' && (
           /* Live Sri Lankan Map GPS Hub View */
           <div className="gps-dashboard-grid animate-fade-in">
               
@@ -724,6 +803,239 @@ const ItemsPage = () => {
               </div>
             </div>
           )}
+
+        {activeTab === 'sales' && (
+          <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-white m-0 flex items-center gap-2">
+                  <FileText size={22} className="text-primary" />
+                  Daily Sales Ledger
+                </h2>
+                <p className="text-muted text-sm m-0">Review chronological sales history, daily revenues, and salesman billing reports</p>
+              </div>
+              <div className="glass-panel py-2 px-4 border border-surface-border text-center sm:text-right" style={{ background: 'rgba(15,23,42,0.45)', borderRadius: '12px' }}>
+                <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.05em' }}>All-Time Sales</span>
+                <span style={{ fontSize: '1.25rem', fontWeight: '900', color: '#34d399' }}>
+                  Rs. {bills?.filter(b => b.status !== 'cancelled').reduce((sum, b) => sum + (parseFloat(b.total) || 0), 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            </div>
+
+            {sortedDates.length === 0 ? (
+              <div className="glass-panel p-8 text-center text-muted border border-surface-border" style={{ padding: '3rem 1.5rem' }}>
+                <Calendar size={36} className="mx-auto mb-3 text-muted/50" />
+                <p className="m-0 font-medium text-white">No sales bills recorded yet.</p>
+                <p className="text-xs text-muted/60 mt-1">Once representatives issue bills, they will appear here grouped by date!</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {sortedDates.map(date => {
+                  const dayBills = groupedBillsByDate[date];
+                  const activeBills = dayBills.filter(b => b.status !== 'cancelled');
+                  const dailyTotal = activeBills.reduce((sum, b) => sum + (parseFloat(b.total) || 0), 0);
+                  const isExpanded = expandedDates[date] || false;
+
+                  return (
+                    <div 
+                      key={date} 
+                      className="glass-panel border animate-fade-in"
+                      style={{
+                        borderColor: isExpanded ? 'rgba(99, 102, 241, 0.3)' : 'rgba(255, 255, 255, 0.08)',
+                        background: isExpanded ? 'linear-gradient(180deg, rgba(30, 41, 59, 0.65) 0%, rgba(15, 23, 42, 0.9) 100%)' : 'rgba(30, 41, 59, 0.25)',
+                        transition: 'all 0.3s ease',
+                        overflow: 'hidden',
+                        padding: 0
+                      }}
+                    >
+                      {/* Date Header Row */}
+                      <div 
+                        onClick={() => toggleDateExpanded(date)}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '1.25rem 1.5rem',
+                          cursor: 'pointer',
+                          userSelect: 'none'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '10px',
+                            background: isExpanded ? 'rgba(99, 102, 241, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: isExpanded ? '#818cf8' : '#cbd5e1'
+                          }}>
+                            <Calendar size={18} />
+                          </div>
+                          <div>
+                            <h4 style={{ margin: 0, color: 'white', fontSize: '1.05rem', fontWeight: '700' }}>
+                              {formatDateFriendly(date)}
+                            </h4>
+                            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                              {dayBills.length} {dayBills.length === 1 ? 'Bill' : 'Bills'} Issued
+                            </span>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ display: 'block', fontSize: '0.65rem', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Daily Revenue</span>
+                            <span style={{ fontSize: '1.15rem', fontWeight: '800', color: '#10b981' }}>
+                              Rs. {dailyTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                          <div style={{ color: '#94a3b8' }}>
+                            {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bills Accordion Content */}
+                      {isExpanded && (
+                        <div style={{
+                          borderTop: '1px solid rgba(255,255,255,0.06)',
+                          padding: '1.25rem 1.5rem',
+                          background: 'rgba(10, 15, 30, 0.35)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '1rem'
+                        }}>
+                          {dayBills.map(bill => {
+                            const billId = bill.id || bill._id;
+                            const isBillExpanded = expandedBills[billId] || false;
+                            
+                            // Status colors
+                            let statusColor = '#eab308'; // pending
+                            let statusBg = 'rgba(234, 179, 8, 0.1)';
+                            let statusBorder = 'rgba(234, 179, 8, 0.2)';
+                            if (bill.status === 'delivered') {
+                              statusColor = '#10b981';
+                              statusBg = 'rgba(16, 185, 129, 0.1)';
+                              statusBorder = 'rgba(16, 185, 129, 0.2)';
+                            } else if (bill.status === 'cancelled') {
+                              statusColor = '#ef4444';
+                              statusBg = 'rgba(239, 68, 68, 0.1)';
+                              statusBorder = 'rgba(239, 68, 68, 0.2)';
+                            }
+
+                            return (
+                              <div 
+                                key={billId} 
+                                style={{
+                                  background: 'rgba(30, 41, 59, 0.25)',
+                                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                                  borderRadius: '12px',
+                                  padding: '1rem',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '0.75rem'
+                                }}
+                              >
+                                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                                  <div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                      <span style={{ color: 'white', fontWeight: '700', fontSize: '0.95rem' }}>
+                                        {getCustomerName(bill.customerId)}
+                                      </span>
+                                      <span style={{
+                                        fontSize: '0.65rem',
+                                        fontWeight: '700',
+                                        color: statusColor,
+                                        background: statusBg,
+                                        border: `1px solid ${statusBorder}`,
+                                        padding: '0.15rem 0.45rem',
+                                        borderRadius: '20px',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.04em'
+                                      }}>
+                                        {bill.status}
+                                      </span>
+                                    </div>
+                                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                                      By: <strong style={{ color: '#c7d2fe' }}>{getSalesmanName(bill.salesmanId)}</strong> &bull; {formatTimeFriendly(bill.date)}
+                                    </span>
+                                  </div>
+
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                    <div style={{ textAlign: 'right' }}>
+                                      <span style={{ fontSize: '1rem', fontWeight: '800', color: bill.status === 'cancelled' ? '#94a3b8' : 'white' }}>
+                                        Rs. {bill.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                      </span>
+                                    </div>
+                                    <button 
+                                      onClick={() => toggleBillExpanded(billId)}
+                                      className="btn btn-outline"
+                                      style={{ height: '32px', padding: '0 0.5rem', fontSize: '0.75rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.1)' }}
+                                    >
+                                      {isBillExpanded ? 'Hide Items' : 'View Items'}
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Bill Items Detailed Summary Accordion */}
+                                {isBillExpanded && (
+                                  <div style={{ 
+                                    background: 'rgba(0,0,0,0.25)', 
+                                    padding: '0.85rem', 
+                                    borderRadius: '8px', 
+                                    border: '1px solid rgba(255,255,255,0.03)',
+                                    animation: 'fadeIn 0.2s ease-out',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '0.6rem'
+                                  }}>
+                                    <span style={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: '700', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                                      BILL ITEMS LIST
+                                    </span>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                                      {bill.items.map((bi, idx) => (
+                                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#e2e8f0' }}>
+                                          <span>
+                                            {bi.name} <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>({bi.qty} x Rs. {bi.price})</span>
+                                          </span>
+                                          <span style={{ fontWeight: '600' }}>
+                                            Rs. {bi.total.toLocaleString('en-US')}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    
+                                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.5rem', marginTop: '0.2rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.75rem', color: '#cbd5e1' }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <span>Subtotal:</span>
+                                        <span>Rs. {bill.subtotal.toLocaleString('en-US')}</span>
+                                      </div>
+                                      {bill.discountAmount > 0 && (
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', color: '#f87171' }}>
+                                          <span>Discount ({bill.discountType === 'percent' ? `${bill.discountValue}%` : 'Cash'}):</span>
+                                          <span>- Rs. {bill.discountAmount.toLocaleString('en-US')}</span>
+                                        </div>
+                                      )}
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '700', color: 'white', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '0.3rem', marginTop: '0.15rem' }}>
+                                        <span>Net Total:</span>
+                                        <span style={{ color: '#34d399' }}>Rs. {bill.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );
