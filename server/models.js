@@ -21,7 +21,7 @@ const CustomerSchema = new Schema({
   order: { type: Number, required: true }
 });
 
-// 4. Salesman Schema
+// 4. Salesmen Schema
 const SalesmanSchema = new Schema({
   id: { type: String, required: true, unique: true }, // 'sales1', 'sales2'
   name: { type: String, required: true },
@@ -29,7 +29,7 @@ const SalesmanSchema = new Schema({
   lat: { type: Number, default: null },
   lng: { type: Number, default: null },
   lastUpdated: { type: String, default: null }
-});
+}, { id: false });
 
 // 5. Bill Schema
 const BillSchema = new Schema({

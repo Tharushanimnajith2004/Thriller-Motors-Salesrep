@@ -413,15 +413,15 @@ app.get('/api/salesmen', async (req, res) => {
   } else {
     try {
       // Self-heal: Ensure sales1 and sales2 documents exist in Cloud Database
-      let s1 = await Salesman.findOne({ id: 'sales1' });
-      if (!s1) {
-        console.log('[Self-Heal] Re-creating missing salesman sales1 in cloud...');
-        s1 = await new Salesman({ id: 'sales1', name: 'Salesman 1', isTracking: false, lat: null, lng: null, lastUpdated: null }).save();
-      }
-      let s2 = await Salesman.findOne({ id: 'sales2' });
-      if (!s2) {
-        console.log('[Self-Heal] Re-creating missing salesman sales2 in cloud...');
-        s2 = await new Salesman({ id: 'sales2', name: 'Salesman 2', isTracking: false, lat: null, lng: null, lastUpdated: null }).save();
+      const sales1 = await Salesman.findOne({ id: 'sales1' });
+      const sales2 = await Salesman.findOne({ id: 'sales2' });
+      if (!sales1 || !sales2) {
+        console.log('[Self-Heal] Salesman collection is incomplete. Re-seeding cleanly...');
+        await Salesman.deleteMany({});
+        await Salesman.insertMany([
+          { id: 'sales1', name: 'Salesman 1', isTracking: false, lat: null, lng: null, lastUpdated: null },
+          { id: 'sales2', name: 'Salesman 2', isTracking: false, lat: null, lng: null, lastUpdated: null }
+        ]);
       }
 
       const salesmen = await Salesman.find();
